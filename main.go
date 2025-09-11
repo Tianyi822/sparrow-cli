@@ -47,16 +47,10 @@ func main() {
 	initComponents(initializationCtx)
 	cancel()
 
-	// 从环境变量获取API密钥
-	apiKey := ""
-
-	// 构建请求URL
-	url := "https://api.moonshot.cn/v1/chat/completions"
-
 	// 构建请求体
-	requestBody := RequestBody{
-		Model: "kimi-k2-0905-preview",
-		Messages: []Message{
+	requestBody := client.RequestBody{
+		Model: env.CurrentModel.Name,
+		Messages: []client.Message{
 			{
 				Role:    "system",
 				Content: "你是 Kimi，由 Moonshot AI 提供的人工智能助手，你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时，你会拒绝一切涉及恐怖主义，种族歧视，黄色暴力等问题的回答。Moonshot AI 为专有名词，不可翻译成其他语言。",
@@ -76,20 +70,20 @@ func main() {
 	}
 
 	// 创建HTTP请求
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", env.CurrentModel.URL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Fatalf("创建请求失败: %v", err)
 	}
 
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+env.CurrentModel.ApiKey)
 
 	// 创建HTTP客户端
-	client := &http.Client{}
+	c := &http.Client{}
 
 	// 发送请求
-	resp, err := client.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
 		log.Fatalf("请求失败: %v", err)
 	}
