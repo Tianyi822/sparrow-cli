@@ -21,4 +21,6 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	t.Logf("logger: %+v", Logger)
+
+	t.Logf("current model: %+v", env.CurrentModel)
 }

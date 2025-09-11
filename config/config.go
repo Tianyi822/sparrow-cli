@@ -61,5 +61,10 @@ func LoadConfig() {
 		// 设置全局配置
 		Models = conf.Models
 		Logger = conf.Logger
+
+		// 设置环境中的默认模型
+		if len(Models) > 0 {
+			env.SetCurrentModel(Models[0].Model, Models[0].ApiKey, Models[0].URL)
+		}
 	})
 }
