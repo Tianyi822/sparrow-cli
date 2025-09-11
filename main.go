@@ -2,25 +2,51 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"sparrow-cli/client"
+	"sparrow-cli/config"
+	"sparrow-cli/env"
+	"sparrow-cli/logger"
+	"time"
 )
 
-type RequestBody struct {
-	Model       string    `json:"model"`
-	Messages    []Message `json:"messages"`
-	Temperature float64   `json:"temperature"`
+func initProjEnv() {
+	// 判断环境变量是否有 SparrowCliHome
+	//	- 若有，则从 SparrowCliHome 中加载配置文件并将该路径保存到全局变量 env.SparrowCliHome 中
+	// 	- 若没有，则指定默认路径 ~/.sparrow-cli 为 HOME_PATH，并保存在 env.SparrowCliHome 中
+	homePath := os.Getenv("SparrowCliHome")
+	if homePath == "" {
+		homePath = os.Getenv("HOME") + "/.sparrow-cli"
+	}
+	env.SparrowCliHome = homePath
 }
 
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+// initComponents 初始化组件
+func initComponents(ctx context.Context) {
+	// 初始化日志组件
+	if err := logger.InitLogger(ctx); err != nil {
+		log.Fatalf("初始化日志组件失败: %v", err)
+	}
 }
 
 func main() {
+	// 初始化项目家目录
+	initProjEnv()
+
+	// 加载配置文件
+	config.LoadConfig()
+
+	// 加载组件
+	initializationCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	initComponents(initializationCtx)
+	cancel()
+
 	// 从环境变量获取API密钥
 	apiKey := ""
 
