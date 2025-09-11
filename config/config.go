@@ -13,27 +13,19 @@ import (
 var loadConfigOnce sync.Once
 
 var (
-	models []ModelConfig
+	Models []ModelConfig
+	Logger LoggerConfigData
 )
 
 func LoadConfig() {
 	loadConfigOnce.Do(func() {
-		// 1. 判断环境变量是否有 SparrowCliHome
-		//	1.1 若有，则从 SparrowCliHome 中加载配置文件并将该路径保存到全局变量 env.SparrowCliHome 中
-		// 	1.2 若没有，则指定默认路径 ~/.sparrow-cli 为 HOME_PATH，并保存在 env.SparrowCliHome 中
-		homePath := os.Getenv("SparrowCliHome")
-		if homePath == "" {
-			homePath = os.Getenv("HOME") + "/.sparrow-cli"
-		}
-		env.SparrowCliHome = homePath
-
 		// 2. 判断 SparrowCliHome 是否有 config.yaml 文件
 		// 	2.1 若有，则加载该文件
 		// 	2.2 若没有，则按照 config.items 结构创建 config.yaml 文件并保存在 HOME_PATH 中
 		configFilePath := env.SparrowCliHome + "/config/sparrow_cli_config.yaml"
 		if !file.IsExist(configFilePath) {
 			// 新建文件并保存空配置
-			file, createErr := file.CreateFile(configFilePath)
+			f, createErr := file.CreateFile(configFilePath)
 			if createErr != nil {
 				panic(createErr)
 			}
@@ -42,11 +34,11 @@ func LoadConfig() {
 			if err != nil {
 				panic(fmt.Errorf("将配置数据转换为 YAML 失败: %w", err))
 			}
-			_, wErr := file.Write(yamlData)
+			_, wErr := f.Write(yamlData)
 			if wErr != nil {
 				panic(fmt.Errorf("写入 YAML 数据到文件失败: %w", wErr))
 			}
-			closeErr := file.Close()
+			closeErr := f.Close()
 			if closeErr != nil {
 				panic(fmt.Errorf("关闭文件失败: %w", closeErr))
 			}
@@ -67,6 +59,7 @@ func LoadConfig() {
 		}
 
 		// 设置全局配置
-		models = conf.Models
+		Models = conf.Models
+		Logger = conf.Logger
 	})
 }
