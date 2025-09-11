@@ -12,6 +12,7 @@ import (
 	"sparrow-cli/client"
 	"sparrow-cli/config"
 	"sparrow-cli/env"
+	"sparrow-cli/global"
 	"sparrow-cli/logger"
 	"time"
 )
@@ -49,7 +50,7 @@ func main() {
 
 	// 构建请求体
 	requestBody := client.RequestBody{
-		Model: env.CurrentModel.Name,
+		Model: global.CurrentModel.Name,
 		Messages: []client.Message{
 			{
 				Role:    "system",
@@ -70,14 +71,14 @@ func main() {
 	}
 
 	// 创建HTTP请求
-	req, err := http.NewRequest("POST", env.CurrentModel.URL, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", global.CurrentModel.URL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Fatalf("创建请求失败: %v", err)
 	}
 
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+env.CurrentModel.ApiKey)
+	req.Header.Set("Authorization", "Bearer "+global.CurrentModel.ApiKey)
 
 	// 创建HTTP客户端
 	c := &http.Client{}

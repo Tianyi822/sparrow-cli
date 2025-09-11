@@ -5,6 +5,7 @@ import (
 	"os"
 	"sparrow-cli/env"
 	"sparrow-cli/file"
+	"sparrow-cli/global"
 	"sync"
 
 	"gopkg.in/yaml.v3"
@@ -64,7 +65,7 @@ func LoadConfig() {
 
 		// 设置环境中的默认模型
 		if len(Models) > 0 {
-			env.SetCurrentModel(Models[0].Model, Models[0].ApiKey, Models[0].URL)
+			global.SetCurrentModel(Models[0].Model, Models[0].ApiKey, Models[0].URL)
 		}
 	})
 }
