@@ -18,19 +18,19 @@ var (
 
 func LoadConfig() {
 	loadConfigOnce.Do(func() {
-		// 1. 判断环境变量是否有 SPARROW_CLI_HOME
-		//	1.1 若有，则从 SPARROW_CLI_HOME 中加载配置文件并将该路径保存到全局变量 env.SPARROW_CLI_HOME 中
-		// 	1.2 若没有，则指定默认路径 ~/.sparrow-cli 为 HOME_PATH，并保存在 env.SPARROW_CLI_HOME 中
-		homePath := os.Getenv("SPARROW_CLI_HOME")
+		// 1. 判断环境变量是否有 SparrowCliHome
+		//	1.1 若有，则从 SparrowCliHome 中加载配置文件并将该路径保存到全局变量 env.SparrowCliHome 中
+		// 	1.2 若没有，则指定默认路径 ~/.sparrow-cli 为 HOME_PATH，并保存在 env.SparrowCliHome 中
+		homePath := os.Getenv("SparrowCliHome")
 		if homePath == "" {
 			homePath = os.Getenv("HOME") + "/.sparrow-cli"
 		}
-		env.SPARROW_CLI_HOME = homePath
+		env.SparrowCliHome = homePath
 
-		// 2. 判断 SPARROW_CLI_HOME 是否有 config.yaml 文件
+		// 2. 判断 SparrowCliHome 是否有 config.yaml 文件
 		// 	2.1 若有，则加载该文件
 		// 	2.2 若没有，则按照 config.items 结构创建 config.yaml 文件并保存在 HOME_PATH 中
-		configFilePath := env.SPARROW_CLI_HOME + "/config/sparrow_cli_config.yaml"
+		configFilePath := env.SparrowCliHome + "/config/sparrow_cli_config.yaml"
 		if !file.IsExist(configFilePath) {
 			// 新建文件并保存空配置
 			file, createErr := file.CreateFile(configFilePath)
