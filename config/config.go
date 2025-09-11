@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sparrow-cli/env"
-	"sparrow-cli/fileutils"
+	"sparrow-cli/file"
 	"sync"
 
 	"gopkg.in/yaml.v3"
@@ -31,9 +31,9 @@ func LoadConfig() {
 		// 	2.1 若有，则加载该文件
 		// 	2.2 若没有，则按照 config.items 结构创建 config.yaml 文件并保存在 HOME_PATH 中
 		configFilePath := env.SPARROW_CLI_HOME + "/config/sparrow_cli_config.yaml"
-		if !fileutils.IsExist(configFilePath) {
+		if !file.IsExist(configFilePath) {
 			// 新建文件并保存空配置
-			file, createErr := fileutils.CreateFile(configFilePath)
+			file, createErr := file.CreateFile(configFilePath)
 			if createErr != nil {
 				panic(createErr)
 			}
