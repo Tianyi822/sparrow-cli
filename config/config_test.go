@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"sparrow-cli/env"
+	"sparrow-cli/global"
 	"testing"
 )
 
@@ -22,5 +23,5 @@ func TestLoadConfig(t *testing.T) {
 
 	t.Logf("logger: %+v", Logger)
 
-	t.Logf("current model: %+v", env.CurrentModel)
+	t.Logf("current model: %+v", global.CurrentModel)
 }
