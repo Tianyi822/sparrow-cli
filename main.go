@@ -1,19 +1,17 @@
 package main
 
 import (
-	"bytes"
+	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"sparrow-cli/client"
 	"sparrow-cli/config"
 	"sparrow-cli/env"
-	"sparrow-cli/global"
 	"sparrow-cli/logger"
+	"strings"
 	"time"
 )
 
@@ -49,59 +47,73 @@ func main() {
 	cancel()
 
 	// 构建请求体
-	requestBody := client.RequestBody{
-		Model: global.CurrentModel.Name,
-		Messages: []client.Message{
-			{
-				Role:    "system",
-				Content: "你是 Kimi，由 Moonshot AI 提供的人工智能助手，你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时，你会拒绝一切涉及恐怖主义，种族歧视，黄色暴力等问题的回答。Moonshot AI 为专有名词，不可翻译成其他语言。",
-			},
-			{
-				Role:    "user",
-				Content: "你好，我叫李雷，1+1等于多少？",
-			},
-		},
-		Temperature: 0.6,
-	}
+	var messages []client.Message
 
-	// 将请求体序列化为JSON
-	jsonData, err := json.Marshal(requestBody)
-	if err != nil {
-		log.Fatalf("JSON编码失败: %v", err)
-	}
+	// 系统消息
+	systemPrompt := "你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时，你会拒绝一切涉及恐怖主义，种族歧视，黄色暴力等问题的回答。Moonshot AI 为专有名词，不可翻译成其他语言。"
+	messages = append(messages, client.Message{
+		Role:    client.SysRole,
+		Content: systemPrompt,
+	})
 
-	// 创建HTTP请求
-	req, err := http.NewRequest("POST", global.CurrentModel.URL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		log.Fatalf("创建请求失败: %v", err)
-	}
-
-	// 设置请求头
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+global.CurrentModel.ApiKey)
+	// 创建标准输入扫描器
+	scanner := bufio.NewScanner(os.Stdin)
 
 	// 创建HTTP客户端
+	// 9.9 和 9.11 哪个大，这个问题为什么通常用来测试大模型
 	c := &http.Client{}
 
-	// 发送请求
-	resp, err := c.Do(req)
-	if err != nil {
-		log.Fatalf("请求失败: %v", err)
-	}
-	defer func(Body io.ReadCloser) {
-		closeErr := Body.Close()
-		if closeErr != nil {
-			fmt.Println(closeErr)
+	for {
+		fmt.Print("请输入问题：")
+		// 用户输入的问题
+		if !scanner.Scan() {
+			break
 		}
-	}(resp.Body)
+		msg := strings.TrimSpace(scanner.Text())
+		if msg == "" {
+			continue
+		}
+		if msg == "!quit" {
+			break
+		}
+		messages = append(messages, client.Message{
+			Role:    client.UserRole,
+			Content: msg,
+		})
 
-	// 读取响应体
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("读取响应失败: %v", err)
+		req := client.BuildStreamRequest(messages, 0.6)
+
+		// 发送请求
+		resp, err := c.Do(req)
+		if err != nil {
+			logger.Fatal("请求失败: %v", err)
+		}
+
+		// 解析响应数据
+		responseBody, err := client.ParseStreamResponseWithCallback(resp, printContent)
+		if err != nil {
+			logger.Fatal("解析响应失败: %v", err)
+		}
+
+		// 打印响应结果
+		fmt.Printf("状态码: %d\n", resp.StatusCode)
+		fmt.Printf("模型: %s\n", responseBody.Model)
+
+		fmt.Printf("Token使用: 输入=%d, 输出=%d, 总计=%d\n",
+			responseBody.Usage.PromptTokens,
+			responseBody.Usage.CompletionTokens,
+			responseBody.Usage.TotalTokens)
+
+		// 将AI的回复添加到对话历史中
+		if len(responseBody.Choices) > 0 {
+			messages = append(messages, client.Message{
+				Role:    client.AssistantRole,
+				Content: responseBody.Choices[0].Message.Content,
+			})
+		}
 	}
+}
 
-	// 打印响应结果
-	fmt.Printf("状态码: %d\n", resp.StatusCode)
-	fmt.Printf("响应内容: %s\n", body)
+func printContent(content string, isFinished bool) {
+	fmt.Print(content)
 }
