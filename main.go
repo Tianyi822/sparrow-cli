@@ -35,23 +35,9 @@ func initComponents(ctx context.Context) {
 	}
 }
 
-func main() {
-	// 初始化项目家目录
-	initProjEnv()
-
-	// 加载配置文件
-	config.LoadConfig()
-
-	// 加载组件
-	initializationCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	initComponents(initializationCtx)
-	cancel()
-
+func initSysRole(messages []client.Message) []client.Message {
 	// 初始化系统提示词
 	global.InitSystemPrompt()
-
-	// 构建请求体
-	var messages []client.Message
 
 	// 使用全局管理的系统消息
 	messages = append(messages, client.Message{
@@ -59,6 +45,10 @@ func main() {
 		Content: global.GetSystemPrompt(),
 	})
 
+	return messages
+}
+
+func run(messages []client.Message) {
 	// 创建标准输入扫描器
 	scanner := bufio.NewScanner(os.Stdin)
 
@@ -115,6 +105,28 @@ func main() {
 			})
 		}
 	}
+}
+
+func main() {
+	// 初始化项目家目录
+	initProjEnv()
+
+	// 加载配置文件
+	config.LoadConfig()
+
+	// 加载组件
+	initializationCtx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	initComponents(initializationCtx)
+	cancel()
+
+	// 请求信息
+	var messages []client.Message
+
+	// 初始化角色
+	messages = initSysRole(messages)
+
+	// 启动对话
+	run(messages)
 }
 
 func printContent(content string, isFinished bool) {
